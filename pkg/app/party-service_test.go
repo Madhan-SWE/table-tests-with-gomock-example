@@ -2,10 +2,11 @@ package app
 
 import (
 	"fmt"
+	"testing"
+
 	mock_party "github.com/areknoster/table-driven-tests-gomock/mocks/pkg/party"
 	"github.com/areknoster/table-driven-tests-gomock/pkg/party"
 	"github.com/golang/mock/gomock"
-	"testing"
 )
 
 func TestPartyService_GreetVisitors_NotNiceReturnsError(t *testing.T) {
@@ -56,7 +57,11 @@ func TestPartyService_GreetVisitors(t *testing.T) {
 			prepare: func(f *fields) {
 				// if given calls do not happen in expected order, the test would fail!
 				gomock.InOrder(
-					f.visitorLister.EXPECT().ListVisitors(party.NiceVisitor).Return([]string{"Peter"}, nil),
+					f.visitorLister.EXPECT().ListVisitors(party.NiceVisitor).Return([]party.Visitor{party.Visitor{
+						Name:    "Madhan",
+						Surname: "Kumar",
+					},
+					}, nil),
 					f.visitorLister.EXPECT().ListVisitors(party.NotNiceVisitor).Return(nil, fmt.Errorf("dummyErr")),
 				)
 			},
@@ -66,13 +71,23 @@ func TestPartyService_GreetVisitors(t *testing.T) {
 		{
 			name: " name of nice person, 1 name of not-nice person. greeter should be called with a nice person first, then with not-nice person as an argument",
 			prepare: func(f *fields) {
-				nice := []string{"Peter"}
-				notNice := []string{"Buka"}
+				nice := []party.Visitor{
+					party.Visitor{
+						Name:    "Peter",
+						Surname: "Parker",
+					},
+				}
+				notNice := []party.Visitor{
+					party.Visitor{
+						Name:    "Helo",
+						Surname: "Parker",
+					},
+				}
 				gomock.InOrder(
 					f.visitorLister.EXPECT().ListVisitors(party.NiceVisitor).Return(nice, nil),
 					f.visitorLister.EXPECT().ListVisitors(party.NotNiceVisitor).Return(notNice, nil),
-					f.greeter.EXPECT().Hello(nice[0]),
-					f.greeter.EXPECT().Hello(notNice[0]),
+					f.greeter.EXPECT().Hello(nice[0].Name+" "+nice[0].Surname),
+					f.greeter.EXPECT().Hello(notNice[0].Name+" "+notNice[0].Surname),
 				)
 			},
 			args:    args{justNice: false},
